@@ -1,0 +1,180 @@
+# main.py
+import pygame
+import sys
+from pygame_gui import UIManager
+import pygame_gui
+from pygame_gui.elements import UIButton, UITextEntryLine, UILabel
+from pygame_gui.core.ui_container import UIContainer
+import drawing_logic
+
+# Initialize pygame
+pygame.init()
+
+# Set the initial width and height of the screen
+width, height = pygame.display.Info().current_w, pygame.display.Info().current_h
+screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
+pygame.display.set_caption("Intersecting Lines")
+
+# Create a GUI manager
+manager = UIManager((width, height))
+
+# Create a toggle button for the left sidebar
+toggle_button_rect_left = pygame.Rect(10, 10, 30, 30)
+toggle_button_left = UIButton(relative_rect=toggle_button_rect_left,
+                              text='',
+                              manager=manager)
+
+# Create a grey sidebar on the left
+sidebar_width = 300
+sidebar_rect_left = pygame.Rect(0, 0, sidebar_width, height)
+sidebar_surface_left = pygame.Surface((sidebar_rect_left.width, sidebar_rect_left.height))
+sidebar_surface_left.fill((150, 150, 150))
+
+# Create a container for the left sidebar
+sidebar_container_left = UIContainer(relative_rect=sidebar_rect_left, manager=manager, container=None)
+
+# Create edittexts and their tags on the left sidebar
+edittext_tags = ["NO. OF AXIS LINES:", "DIMENSIONS OF AXIS LINES:", "ARRANGEMENT OF AXIS LINES:",
+                 "NO. OF INTERVALS:", "DIMENSIONS OF INTERVALS:", "ARRANGEMENT OF INTERVALS:"]
+edittexts_left = {}
+
+tag_font = pygame.font.Font(None, 24)
+edittext_font = pygame.font.Font(None, 20)
+
+element_x = 10
+element_y = 50
+element_spacing = 20
+
+for tag in edittext_tags:
+    tag_surface = tag_font.render(tag, True, (0, 0, 0))
+    tag_rect = tag_surface.get_rect(topleft=(element_x, element_y))
+    sidebar_surface_left.blit(tag_surface, tag_rect)
+
+    edittext_rect = pygame.Rect(element_x, element_y + tag_rect.height + element_spacing, 150, 30)
+    edittext = UITextEntryLine(relative_rect=edittext_rect, manager=manager, container=sidebar_container_left)
+    edittexts_left[tag] = edittext
+
+    element_y += tag_rect.height + edittext_rect.height + element_spacing
+
+# Create a GO! Button at the end of the left sidebar
+go_button_rect = pygame.Rect(element_x, element_y + 20, 150, 30)
+go_button = UIButton(relative_rect=go_button_rect,
+                     text='GO!',
+                     manager=manager,
+                     container=sidebar_container_left)
+
+# Function to toggle the left sidebar visibility
+def toggle_sidebar_left():
+    sidebar_rect_left.x = -sidebar_width if sidebar_rect_left.x == 0 else 0
+    # Toggle visibility of edittexts, tags, and GO! Button
+    for edittext in edittexts_left.values():
+        edittext.visible = not edittext.visible
+    go_button.visible = not go_button.visible
+
+# Set callback for GO! button press
+def on_go_button_pressed():
+    print("GO! button pressed")
+    num_lines_text = edittexts_left["NO. OF AXIS LINES:"].get_text()
+    print(f"Value entered: {num_lines_text}")
+    
+    # Check if edittext is empty
+    if not num_lines_text:
+        print("Error: Please enter a value for the number of axis lines.")
+        return
+    
+    # Check if input is numerical
+    if not num_lines_text.isnumeric():
+        print("Error: Please enter a numerical value for the number of axis lines.")
+        return
+    
+    num_lines = int(num_lines_text)
+    print(f"Drawing {num_lines} lines...")
+    drawing_logic.generate_lines(num_lines, width, height)  # Generate lines
+    drawing_logic.draw_lines(screen)  # Draw lines on screen
+
+go_button.callback = on_go_button_pressed
+
+# Create a toggle button for the right sidebar
+toggle_button_rect_right = pygame.Rect(width - 40, 10, 30, 30)
+toggle_button_right = UIButton(relative_rect=toggle_button_rect_right,
+                               text='',
+                               manager=manager)
+
+# Create a grey sidebar on the right
+sidebar_rect_right = pygame.Rect(width - sidebar_width, 0, sidebar_width, height)
+sidebar_surface_right = pygame.Surface((sidebar_rect_right.width, sidebar_rect_right.height))
+sidebar_surface_right.fill((150, 150, 150))
+
+# Create a container for the right sidebar
+sidebar_container_right = UIContainer(relative_rect=sidebar_rect_right, manager=manager, container=None)
+
+# Create edittext for the right sidebar
+edittext_rect_right = pygame.Rect(10, 50, sidebar_width - 20, 30)  # Adjust height as needed
+edittext_right = UITextEntryLine(relative_rect=edittext_rect_right, manager=manager, container=sidebar_container_right)
+edittext_right.set_text('')  # Clear any existing text
+
+# Create a GO! Button for the right sidebar
+go_button_rect_right = pygame.Rect(10, 100, 150, 30)
+go_button_right = UIButton(relative_rect=go_button_rect_right,
+                            text='GO!',
+                            manager=manager,
+                            container=sidebar_container_right)
+
+# Create a label for the right sidebar
+label_rect_right = pygame.Rect(10, 150, sidebar_width - 20, 30)  # Adjust height as needed
+label_right = UILabel(relative_rect=label_rect_right,
+                      text='',
+                      manager=manager,
+                      container=sidebar_container_right)
+
+# Function to toggle the right sidebar visibility
+def toggle_sidebar_right():
+    sidebar_rect_right.x = width - sidebar_width if sidebar_rect_right.x == width else width
+    # Toggle visibility of edittext, GO! button, and label
+    edittext_right.visible = not edittext_right.visible
+    go_button_right.visible = not go_button_right.visible
+    label_right.visible = not label_right.visible
+
+# Set callback for GO! button press on the right sidebar
+def on_go_button_right_pressed():
+    print("GO! button (right sidebar) pressed")
+    # Toggle sidebar visibility
+    toggle_sidebar_right()
+
+go_button_right.callback = on_go_button_right_pressed
+
+# Main loop
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                running = False
+        elif event.type == pygame.USEREVENT:
+            if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                if event.ui_element == toggle_button_left:
+                    toggle_sidebar_left()
+                elif event.ui_element == toggle_button_right:
+                    toggle_sidebar_right()
+
+        manager.process_events(event)
+
+    manager.update(pygame.time.Clock().tick(30) / 1000.0)
+
+    screen.fill((255, 255, 255))
+
+    # Draw left sidebar
+    screen.blit(sidebar_surface_left, sidebar_rect_left)
+
+    # Draw right sidebar
+    screen.blit(sidebar_surface_right, sidebar_rect_right)
+
+    # Draw GUI
+    manager.draw_ui(screen)
+
+    pygame.display.flip()
+
+pygame.quit()
+sys.exit()
