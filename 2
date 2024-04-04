@@ -1,0 +1,20 @@
+# drawing_logic.py
+import random
+import pygame
+
+lines = []
+
+def generate_lines(num_lines, width, height):
+    global lines
+    lines = []
+    for _ in range(num_lines):
+        x1 = random.randint(0, width)
+        y1 = random.randint(0, height)
+        x2 = random.randint(0, width)
+        y2 = random.randint(0, height)
+        lines.append(((x1, y1), (x2, y2)))
+
+def draw_lines(screen):
+    global lines
+    for line in lines:
+        pygame.draw.line(screen, (0, 0, 0), line[0], line[1], 1)
